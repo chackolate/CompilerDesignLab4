@@ -1,0 +1,12 @@
+*
+!*/
+!*.gitignore
+!*.c
+*.tab.c
+*.yy.c
+!*.h
+*.tab.h
+!*.y
+!*.l
+!*.txt
+!Makefile

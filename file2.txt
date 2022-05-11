@@ -1,0 +1,6 @@
+tmp1=B*1;
+A=tmp1;
+tmp2=D+E;
+C=tmp2;
+tmp3=A+C;
+F=tmp3;
