@@ -13,10 +13,10 @@ struct stackNode *createVar(char *name, int val) { // create a new user variable
   return node;
 }
 
-struct stackNode *
-findVar(char *name, int val, struct stackNode *node, int rec,
-        char *varList) { // if variable is to be newly assigned, add it to the
-                         // list of user vars.
+struct stackNode *findVar(char *name, int val, struct stackNode *node, int rec,
+                          char *varList) {
+  // if variable is to be newly assigned, add it to the
+  // list of user vars.
   if (strcmp(name, node->var.name) == 0) {
     return node;
   } else if (node->next == NULL) {
