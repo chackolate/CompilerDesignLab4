@@ -169,7 +169,7 @@ int main(){
 	s->head = NULL;
 	s->tail = NULL;
 	s->counter = 0;
-	printf("initialized stack & head\n");
+	/* printf("initialized stack & head\n"); */
 		yyin = fopen("file.txt","r");
 		if(yyin == NULL){
 			printf("File open error");
@@ -185,8 +185,9 @@ int main(){
 
 	/* program *p = (program*)malloc(sizeof(program)); */
 	/* p = Lab3Main(s); */
-	Lab32Main(s);
-	p = Lab3Main(s);
+	/* Lab32Main(s); */
+	/* p = Lab3Main(s); */
+	finalMain(s);
 
 
 	
