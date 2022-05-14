@@ -47,6 +47,7 @@ struct stackNode *assignVar(char *name, int val, stackNode *head) {
 
 struct stackNode *push(char *name, int val, stack *s) {
   stackNode *node = createVar(name, val);
+  strcpy(node->inputs, name);
 
   if (s->counter != 0) {
     s->tail->next = node;
@@ -343,6 +344,26 @@ program *Lab3Main(stack *s) {
 ////////////////Final Project//////////////////////////////////////
 void finalMain(stack *s) {
   printStack(s);
+  elimSubExp(s);
+  printStack(s);
+  stackLatency(s);
+  printf("-----------------------\n");
+  printStackAttributes(s);
+}
+
+void printNodeAttributes(stackNode *n) {
+  printf("%s:%s\n", n->inputs, n->outputs);
+}
+
+void printStackAttributes(stack *s) {
+  stackNode *n = s->head;
+  while (n) {
+    printNodeAttributes(n);
+    n = n->next;
+  }
+}
+
+void elimSubExp(stack *s) {
   stackNode *n = s->head;
   char **subexpressions = (char **)malloc(30 * sizeof(char *)); // 30 strings
   int expCount = 0;
@@ -378,5 +399,35 @@ void finalMain(stack *s) {
       }
     }
   }
-  printStack(s);
+}
+
+int stackLatency(stack *s) {
+  stackNode *n = s->head;
+  while (n) {
+    nodeLatency(n);
+    n = n->next;
+  }
+}
+
+int nodeLatency(stackNode *n) {
+  char *expBuf = (char *)malloc(100 * sizeof(char));
+  char *outBuf = (char *)malloc(100 * sizeof(char));
+  int bufPtr = 0;
+  strcpy(expBuf, n->expression);
+  // read expression
+  for (int i = 0; i < strlen(expBuf); i++) {
+    // check for tmp
+    if (expBuf[i] == 't') {
+      outBuf[bufPtr] = expBuf[i];
+      outBuf[bufPtr + 1] = expBuf[i + 1];
+      outBuf[bufPtr + 2] = expBuf[i + 2];
+      outBuf[bufPtr + 3] = expBuf[i + 3];
+      bufPtr += 4;
+      i += 4;
+    } else if (isalpha(expBuf[i])) {
+      outBuf[bufPtr] = expBuf[i];
+      bufPtr += 1;
+    }
+  }
+  printf("%s %s\n", n->expression, outBuf);
 }

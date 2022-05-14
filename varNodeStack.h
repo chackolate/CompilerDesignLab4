@@ -9,7 +9,6 @@ typedef struct var {
 typedef struct stackNode {
   var var;
   struct stackNode *next;
-  struct stackNode *prev;
   int lineNum;
   char inputs[30];
   char outputs[30];
@@ -76,3 +75,8 @@ program *Lab3Main(stack *s);
 
 // Final Project
 void finalMain(stack *s);
+void elimSubExp(stack *s);
+int nodeLatency(stackNode *n);
+int stackLatency(stack *s);
+void printNodeAttributes(stackNode *n);
+void printStackAttributes(stack *s);

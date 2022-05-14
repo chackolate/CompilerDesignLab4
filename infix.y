@@ -70,6 +70,7 @@ expression :
 						| TXT '=' expression {
 							struct stackNode *node =  assignVar($1,$3->var.val,head);
 							$$ = push($1,$3->var.val,s);
+							// strcpy($3->inputs,$1);
 							sprintf($$->expression,"=%s;\n",$3->var.name);
 						};
 						| TXT {
@@ -78,8 +79,10 @@ expression :
 						}
 						| expression '+' expression {
 							int val = $1->var.val + $3->var.val;
-							$$ = push("tmp",val,s);
-							sprintf($$->var.name, "tmp%d", *temp_counter);
+							char name[4];
+							sprintf(name,"tmp%d",*temp_counter);
+							$$ = push(name,val,s);
+							// sprintf($$->var.name, "tmp%d", *temp_counter);
 							*temp_counter = *temp_counter + 1;
 							sprintf($$->expression,"=%s+%s;\n",$1->var.name,$3->var.name);
 						}
@@ -163,7 +166,7 @@ int main(){
 		}
 	yyparse();
 	fclose(yyin);
-	task1Main(s);
+	/* task1Main(s); */
 
 	*temp_counter = 1;
 	s->head = NULL;
