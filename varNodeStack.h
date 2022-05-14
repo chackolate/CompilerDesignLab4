@@ -80,3 +80,5 @@ int nodeLatency(stackNode *n);
 int stackLatency(stack *s);
 void printNodeAttributes(stackNode *n);
 void printStackAttributes(stack *s);
+void nodeOutputs(stackNode *n);
+void stackOutputs(stack *s);

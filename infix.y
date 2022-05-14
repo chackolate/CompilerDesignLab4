@@ -88,29 +88,37 @@ expression :
 						}
 						| expression '-' expression {
 							int val = $1->var.val - $3->var.val;
-							$$ = push("tmp",val,s);
-							sprintf($$->var.name,"tmp%d",*temp_counter);
+							char name[4];
+							sprintf(name,"tmp%d",*temp_counter);
+							$$ = push(name,val,s);
+							// sprintf($$->var.name,"tmp%d",*temp_counter);
 							*temp_counter = *temp_counter + 1;
 							sprintf($$->expression,"=%s-%s;\n",$1->var.name,$3->var.name);
 						}
 						| expression '*' expression {
 							int val = $1->var.val * $3->var.val;
-							$$ = push("tmp",val,s);
-							sprintf($$->var.name,"tmp%d", *temp_counter);
+							char name[4];
+							sprintf(name,"tmp%d",*temp_counter);
+							$$ = push(name,val,s);
+							// sprintf($$->var.name,"tmp%d", *temp_counter);
 							*temp_counter = *temp_counter + 1;
 							sprintf($$->expression,"=%s*%s;\n",$1->var.name,$3->var.name);
 						}
 						| expression '/' expression {
 							int val = $1->var.val / $3->var.val;
-							$$ = push("tmp",val,s);
-							sprintf($$->var.name,"tmp%d",*temp_counter);
+							char name[4];
+							sprintf(name,"tmp%d",*temp_counter);
+							$$ = push(name,val,s);
+							// sprintf($$->var.name,"tmp%d",*temp_counter);
 							*temp_counter = *temp_counter + 1;
 							sprintf($$->expression,"=%s/%s;\n",$1->var.name,$3->var.name);
 						}
 						| expression EXP expression {
 							int val = pow($1->var.val,$3->var.val);
-							$$ = push("tmp",val,s);
-							sprintf($$->var.name,"tmp%d",*temp_counter);
+							char name[4];
+							sprintf(name,"tmp%d",*temp_counter);
+							$$ = push(name,val,s);
+							// sprintf($$->var.name,"tmp%d",*temp_counter);
 							*temp_counter = *temp_counter + 1;
 							sprintf($$->expression,"=%s**%s;\n",$1->var.name,$3->var.name);
 						}
@@ -122,8 +130,10 @@ expression :
 							else{
 								val = 0;
 							}
-							$$ = push("tmp",val,s);
-							sprintf($$->var.name,"tmp%d",*temp_counter);
+							char name[4];
+							sprintf(name,"tmp%d",*temp_counter);
+							$$ = push(name,val,s);
+							// sprintf($$->var.name,"tmp%d",*temp_counter);
 							*temp_counter = *temp_counter + 1;
 							sprintf($$->expression,"=%d;\n",val);
 						}
@@ -138,8 +148,10 @@ expression :
 								sprintf(exp2,"\t%s%s",node->var.name,node->expression);
 								strcat(exp,exp2);
 							}
-							$$ = push("tmp",val,s);
-							sprintf($$->var.name, "tmp%d", *temp_counter);
+							char name[4];
+							sprintf(name,"tmp%d",*temp_counter);
+							$$ = push(name,val,s);
+							// sprintf($$->var.name, "tmp%d", *temp_counter);
 							*temp_counter = *temp_counter + 1;
 
 							char expEnd[1000];

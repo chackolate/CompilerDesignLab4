@@ -48,6 +48,7 @@ struct stackNode *assignVar(char *name, int val, stackNode *head) {
 struct stackNode *push(char *name, int val, stack *s) {
   stackNode *node = createVar(name, val);
   strcpy(node->inputs, name);
+  node->lineNum = s->counter;
 
   if (s->counter != 0) {
     s->tail->next = node;
@@ -345,10 +346,11 @@ program *Lab3Main(stack *s) {
 void finalMain(stack *s) {
   printStack(s);
   elimSubExp(s);
-  printStack(s);
-  stackLatency(s);
-  printf("-----------------------\n");
+  stackOutputs(s);
   printStackAttributes(s);
+  // printStack(s);
+  // stackLatency(s);
+  printf("-----------------------\n");
 }
 
 void printNodeAttributes(stackNode *n) {
@@ -403,17 +405,45 @@ void elimSubExp(stack *s) {
 
 int stackLatency(stack *s) {
   stackNode *n = s->head;
+  int latency = 0;
   while (n) {
-    nodeLatency(n);
+    latency += nodeLatency(n);
     n = n->next;
   }
+  return latency;
 }
 
 int nodeLatency(stackNode *n) {
-  char *expBuf = (char *)malloc(100 * sizeof(char));
-  char *outBuf = (char *)malloc(100 * sizeof(char));
+  // char *expBuf = (char *)malloc(100 * sizeof(char));
+  // char *outBuf = (char *)malloc(100 * sizeof(char));
+  int latency = 0;
+  // int bufPtr = 0;
+  // strcpy(expBuf, n->expression);
+  // // read expression
+  // for (int i = 0; i < strlen(expBuf); i++) {
+  //   // check for tmp
+  //   if (expBuf[i] == 't') {
+  //     outBuf[bufPtr] = expBuf[i];
+  //     outBuf[bufPtr + 1] = expBuf[i + 1];
+  //     outBuf[bufPtr + 2] = expBuf[i + 2];
+  //     outBuf[bufPtr + 3] = expBuf[i + 3];
+  //     bufPtr += 4;
+  //     i += 4;
+  //   } else if (isalpha(expBuf[i])) {
+  //     outBuf[bufPtr] = expBuf[i];
+  //     bufPtr += 1;
+  //   }
+  // }
+  // printf("%s %s\n", n->expression, outBuf);
+  return latency;
+}
+
+void nodeOutputs(stackNode *n) {
+  char *expBuf = (char *)malloc(30 * sizeof(char));
+  char *outBuf = (char *)malloc(30 * sizeof(char));
   int bufPtr = 0;
-  strcpy(expBuf, n->expression);
+  // strcpy(expBuf, n->expression);
+  memcpy(expBuf, n->expression, (30 * sizeof(char)));
   // read expression
   for (int i = 0; i < strlen(expBuf); i++) {
     // check for tmp
@@ -429,5 +459,14 @@ int nodeLatency(stackNode *n) {
       bufPtr += 1;
     }
   }
+  strcpy(n->outputs, outBuf);
   printf("%s %s\n", n->expression, outBuf);
+}
+
+void stackOutputs(stack *s) {
+  stackNode *n = s->head;
+  while (n) {
+    nodeOutputs(n);
+    n = n->next;
+  }
 }
