@@ -439,11 +439,11 @@ int nodeLatency(stackNode *n) {
 }
 
 void nodeOutputs(stackNode *n) {
-  char *expBuf = (char *)malloc(30 * sizeof(char));
+  char *expBuf = (char *)malloc(500 * sizeof(char));
   char *outBuf = (char *)malloc(30 * sizeof(char));
   int bufPtr = 0;
-  // strcpy(expBuf, n->expression);
-  memcpy(expBuf, n->expression, (30 * sizeof(char)));
+  strcpy(expBuf, n->expression);
+  // memcpy(expBuf, n->expression, (30 * sizeof(char)));
   // read expression
   for (int i = 0; i < strlen(expBuf); i++) {
     // check for tmp
