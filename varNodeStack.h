@@ -10,11 +10,15 @@ typedef struct stackNode {
   var var;
   struct stackNode *next;
   int lineNum;
-  char inputs[30];
+  char *input1;
+  char *input2;
   char outputs[30];
   struct stackNode *dependency1;
   struct stackNode *dependency2;
+  struct stackNode *child1;
+  struct stackNode *child2;
   char expression[500];
+  int latency;
 } stackNode;
 
 typedef struct stack {
@@ -80,5 +84,7 @@ int nodeLatency(stackNode *n);
 int stackLatency(stack *s);
 void printNodeAttributes(stackNode *n);
 void printStackAttributes(stack *s);
-void nodeOutputs(stackNode *n);
-void stackOutputs(stack *s);
+char **nodeInputs(stackNode *n);
+void stackInputs(stack *s);
+void checkDependent(stackNode *a, stackNode *b);
+void stackDependencies(stack *s);

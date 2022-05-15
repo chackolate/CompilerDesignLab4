@@ -47,7 +47,7 @@ struct stackNode *assignVar(char *name, int val, stackNode *head) {
 
 struct stackNode *push(char *name, int val, stack *s) {
   stackNode *node = createVar(name, val);
-  strcpy(node->inputs, name);
+  strcpy(node->outputs, name);
   node->lineNum = s->counter;
 
   if (s->counter != 0) {
@@ -87,9 +87,9 @@ void printStack(stack *s) {
   int counter = 1;
   while (node) {
     if (strstr(node->expression, "if(") == NULL) {
-      printf("S%d: %s%s", counter, node->var.name, node->expression);
+      printf("S%d: %s%s", node->lineNum, node->var.name, node->expression);
     } else {
-      printf("S%d: %s", counter, node->expression);
+      printf("S%d: %s", node->lineNum, node->expression);
     }
     // printf("\n");
     counter++;
@@ -345,16 +345,28 @@ program *Lab3Main(stack *s) {
 ////////////////Final Project//////////////////////////////////////
 void finalMain(stack *s) {
   printStack(s);
-  elimSubExp(s);
-  stackOutputs(s);
+  stackInputs(s);
   printStackAttributes(s);
-  // printStack(s);
-  // stackLatency(s);
+  stackDependencies(s);
   printf("-----------------------\n");
+  printStack(s);
+  printf("latency: %d\n", stackLatency(s));
+  elimSubExp(s);
+  printStack(s);
+  printf("new latency: %d\n", stackLatency(s));
 }
 
+void heuristicAnalysis(stack *s) {}
+
 void printNodeAttributes(stackNode *n) {
-  printf("%s:%s\n", n->inputs, n->outputs);
+  printf("Output: %s\n ", n->outputs);
+  if (n->input1) {
+    printf("Input 1: %s\n", n->input1);
+  }
+  if (n->input2) {
+    printf("Input 2: %s\n", n->input2);
+  }
+  printf("-----------------\n");
 }
 
 void printStackAttributes(stack *s) {
@@ -405,68 +417,141 @@ void elimSubExp(stack *s) {
 
 int stackLatency(stack *s) {
   stackNode *n = s->head;
-  int latency = 0;
+  int maxlatency = 10;
+  int currentLatency = 0;
   while (n) {
-    latency += nodeLatency(n);
+
+    currentLatency = nodeLatency(n);
+    if (currentLatency > maxlatency) {
+      maxlatency = currentLatency;
+    }
     n = n->next;
   }
-  return latency;
+  // latency
+  return maxlatency;
 }
 
 int nodeLatency(stackNode *n) {
-  // char *expBuf = (char *)malloc(100 * sizeof(char));
-  // char *outBuf = (char *)malloc(100 * sizeof(char));
   int latency = 0;
-  // int bufPtr = 0;
-  // strcpy(expBuf, n->expression);
-  // // read expression
-  // for (int i = 0; i < strlen(expBuf); i++) {
-  //   // check for tmp
-  //   if (expBuf[i] == 't') {
-  //     outBuf[bufPtr] = expBuf[i];
-  //     outBuf[bufPtr + 1] = expBuf[i + 1];
-  //     outBuf[bufPtr + 2] = expBuf[i + 2];
-  //     outBuf[bufPtr + 3] = expBuf[i + 3];
-  //     bufPtr += 4;
-  //     i += 4;
-  //   } else if (isalpha(expBuf[i])) {
-  //     outBuf[bufPtr] = expBuf[i];
-  //     bufPtr += 1;
-  //   }
-  // }
-  // printf("%s %s\n", n->expression, outBuf);
+  char expBuf[500];
+  strcpy(expBuf, n->expression);
+  for (int i = 0; i < strlen(expBuf); i++) {
+    switch (expBuf[i]) {
+    case '+':
+      latency += 1;
+      break;
+    case '-':
+      latency += 1;
+      break;
+    case '=':
+      latency += 2;
+      break;
+    case '?':
+      latency += 2;
+      break;
+    case '*':
+      latency += 4;
+      break;
+    case '/':
+      latency += 4;
+      break;
+    default:
+      latency += 0;
+    }
+  }
+  if (n->dependency1) {
+    latency += nodeLatency(n->dependency1);
+  }
+  if (n->dependency2) {
+    latency += nodeLatency(n->dependency2);
+  }
+  printf("node %d latency: %d\n", n->lineNum, latency);
+  n->latency = latency;
   return latency;
 }
 
-void nodeOutputs(stackNode *n) {
+char **nodeInputs(stackNode *n) {
   char *expBuf = (char *)malloc(500 * sizeof(char));
-  char *outBuf = (char *)malloc(30 * sizeof(char));
-  int bufPtr = 0;
+  char **inputs = (char **)malloc(4 * sizeof(char *));
+  int arrPos = 0;
+  int buffPtr = 0;
   strcpy(expBuf, n->expression);
-  // memcpy(expBuf, n->expression, (30 * sizeof(char)));
-  // read expression
   for (int i = 0; i < strlen(expBuf); i++) {
-    // check for tmp
     if (expBuf[i] == 't') {
-      outBuf[bufPtr] = expBuf[i];
-      outBuf[bufPtr + 1] = expBuf[i + 1];
-      outBuf[bufPtr + 2] = expBuf[i + 2];
-      outBuf[bufPtr + 3] = expBuf[i + 3];
-      bufPtr += 4;
-      i += 4;
+      inputs[arrPos] = (char *)malloc(4 * sizeof(char));
+      for (int j = 0; j < 4; j++) {
+        inputs[arrPos][j] = expBuf[i + j];
+      }
+      i += 3;
+      arrPos += 1;
     } else if (isalpha(expBuf[i])) {
-      outBuf[bufPtr] = expBuf[i];
-      bufPtr += 1;
+      inputs[arrPos] = (char *)malloc(sizeof(char));
+      inputs[arrPos][buffPtr] = expBuf[i];
+      arrPos += 1;
+      buffPtr += 1;
     }
   }
-  strcpy(n->outputs, outBuf);
-  printf("%s %s\n", n->expression, outBuf);
+  if (inputs[0]) {
+    n->input1 = (char *)malloc(10 * sizeof(char));
+    strcpy(n->input1, inputs[0]);
+  }
+  if (inputs[1]) {
+    n->input2 = (char *)malloc(10 * sizeof(char));
+    strcpy(n->input2, inputs[1]);
+  }
+
+  return inputs;
 }
 
-void stackOutputs(stack *s) {
+void stackInputs(stack *s) {
   stackNode *n = s->head;
   while (n) {
-    nodeOutputs(n);
+    nodeInputs(n);
+    n = n->next;
+  }
+}
+
+void checkDependent(stackNode *a, stackNode *b) {
+  // printf("checking %d and %d\n", a->lineNum, b->lineNum);
+  if (a->input1) {
+    if (b->outputs) {
+      if (!strcmp(a->input1, b->outputs)) {
+        if (a->lineNum > b->lineNum) {
+          a->dependency1 = b;
+        }
+      }
+    }
+  }
+  if (a->input2) {
+    if (b->outputs) {
+      if (!strcmp(a->input2, b->outputs)) {
+        if (a->lineNum > b->lineNum) {
+          a->dependency2 = b;
+        }
+      }
+    }
+  }
+}
+
+void stackDependencies(stack *s) {
+  stackNode *n = s->head;
+
+  while (n) {
+    stackNode *internal = s->head;
+    for (int i = 0; i < s->counter; i++) {
+      if (i != n->lineNum) {
+        checkDependent(n, internal);
+      }
+      internal = internal->next;
+    }
+    if (n->dependency1) {
+      printf("%d:%d--", n->lineNum, n->dependency1->lineNum);
+      printf("%s:%s\n", n->input1, n->dependency1->outputs);
+    }
+    if (n->dependency2) {
+      printf("%d:%d--", n->lineNum, n->dependency2->lineNum);
+      printf("%s:%s\n", n->input2, n->dependency2->outputs);
+    }
     n = n->next;
   }
 }
