@@ -15,6 +15,7 @@ typedef struct stackNode {
   char outputs[30];
   struct stackNode *dependency1;
   struct stackNode *dependency2;
+  char op;
   struct stackNode *child1;
   struct stackNode *child2;
   char expression[500];
