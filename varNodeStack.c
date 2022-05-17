@@ -352,13 +352,13 @@ void finalMain(stack *s) {
   printf("-----------------------\n");
   // printStack(s);
   printf("latency: %d\n", stackLatency(s));
-  // recursiveSubExp(s);
+  recursiveSubExp(s);
   // printf("latency: %d\n", stackLatency(s));
   // elimSubExp(s);
-  stackDuplicates(s);
-  printStack(s);
-  // printf("new latency: %d\n", stackLatency(s));
-  printStackDuplicates(s);
+  // stackDuplicates(s);
+  // printStack(s);
+  printf("new latency: %d\n", stackLatency(s));
+  // printStackDuplicates(s);
   // stackOperations(s);
   // heuristicAnalysis(s);
 }
@@ -660,7 +660,8 @@ void printStackDuplicates(stack *s) {
 void recursiveSubExp(stack *s) {
   int prevLatency = 0;
   int currLatency = stackLatency(s);
-  while (prevLatency != currLatency) {
+  while (prevLatency != currLatency || s->addSubDupes >= 3 ||
+         s->multDivDupes >= 2 || s->expDupes >= 2) {
     prevLatency = currLatency;
     elimSubExp(s);
     currLatency = stackLatency(s);

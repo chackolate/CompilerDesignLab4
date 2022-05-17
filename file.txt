@@ -1,7 +1,7 @@
 A=C+3
-X=B*A
+X=B**A
 D=C/3
 B=C+3
-X=B*A
+X=B**A
 D=C/3
 A=C+3
