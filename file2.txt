@@ -1,6 +1,5 @@
-tmp1=B*1;
-A=tmp1;
-tmp2=D+E;
-C=tmp2;
-tmp3=A+C;
-F=tmp3;
+A=B+1
+B=C+4
+Z=B+1
+D=C+4
+X=B+1

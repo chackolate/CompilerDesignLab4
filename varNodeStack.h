@@ -16,8 +16,8 @@ typedef struct stackNode {
   struct stackNode *dependency1;
   struct stackNode *dependency2;
   char op;
-  struct stackNode *child1;
-  struct stackNode *child2;
+  int dupeCnt;
+  struct stackNode **dupeExps;
   char expression[500];
   int latency;
 } stackNode;
@@ -26,6 +26,10 @@ typedef struct stack {
   stackNode *head;
   stackNode *tail;
   int counter;
+  int numSubExpressions;
+  int addSubDupes;
+  int multDivDupes;
+  int expDupes;
 } stack;
 
 typedef struct blockNode {
@@ -87,5 +91,11 @@ void printNodeAttributes(stackNode *n);
 void printStackAttributes(stack *s);
 char **nodeInputs(stackNode *n);
 void stackInputs(stack *s);
+void findNodeOperation(stackNode *n);
+void stackOperations(stack *s);
 void checkDependent(stackNode *a, stackNode *b);
 void stackDependencies(stack *s);
+void heuristicAnalysis(stack *s);
+void recursiveSubExp(stack *s);
+void printStackDuplicates(stack *s);
+void stackDuplicates(stack *s);

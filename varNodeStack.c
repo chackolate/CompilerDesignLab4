@@ -348,21 +348,35 @@ void finalMain(stack *s) {
   stackInputs(s);
   printStackAttributes(s);
   stackDependencies(s);
+  stackOperations(s);
   printf("-----------------------\n");
-  printStack(s);
+  // printStack(s);
   printf("latency: %d\n", stackLatency(s));
-  elimSubExp(s);
+  // recursiveSubExp(s);
+  // printf("latency: %d\n", stackLatency(s));
+  // elimSubExp(s);
+  stackDuplicates(s);
   printStack(s);
-  printf("new latency: %d\n", stackLatency(s));
+  // printf("new latency: %d\n", stackLatency(s));
+  printStackDuplicates(s);
+  // stackOperations(s);
+  // heuristicAnalysis(s);
 }
 
 void heuristicAnalysis(stack *s) {
   stackNode *n = s->head;
+  int consec = 0;
   char prevOp = ' ';
   while (n) {
-
+    if (n->op != ' ') {
+      if (n->op == prevOp) {
+        consec += 1;
+      }
+    }
+    prevOp = n->op;
     n = n->next;
   }
+  printf("%d consecutive operations\n", consec);
 }
 
 char **nodeInputs(stackNode *n) {
@@ -434,7 +448,16 @@ void findNodeOperation(stackNode *n) {
       break;
     }
   }
+  printf("%s:%c\n", n->expression, op);
   n->op = op;
+}
+
+void stackOperations(stack *s) {
+  stackNode *n = s->head;
+  while (n) {
+    findNodeOperation(n);
+    n = n->next;
+  }
 }
 
 void checkDependent(stackNode *a, stackNode *b) {
@@ -502,17 +525,22 @@ void printStackAttributes(stack *s) {
 }
 
 void elimSubExp(stack *s) {
+  int tmp_count = 0;
   stackNode *n = s->head;
   char **subexpressions = (char **)malloc(30 * sizeof(char *)); // 30 strings
   int expCount = 0;
+  int addSubCnt = 0;
+  int multDivCnt = 0;
+  int expCnt = 0;
   while (n) {
+
     subexpressions[expCount] =
         (char *)malloc(500 * sizeof(char)); // 30 chars to a string
     strcpy(subexpressions[expCount], n->expression);
     expCount++;
     n = n->next;
   }
-  printf("%d expressions\n", expCount);
+  // printf("%d expressions\n", expCount);
   for (int i = 0; i < expCount; i++) {
     // currently focused line
     for (int j = i; j < expCount; j++) {
@@ -526,29 +554,131 @@ void elimSubExp(stack *s) {
         for (int l = 0; l < i; l++) {
           src = src->next;
         }
+        src->dupeCnt += 1;
+        char expBuf[100] = "=";
+        strcat(expBuf, src->var.name);
+
         stackNode *dst = s->head;
         for (int k = 0; k < j; k++) {
           dst = dst->next;
         }
-        char expBuf[100] = "=";
-        strcat(expBuf, src->var.name);
-        strcat(expBuf, "\n");
-        strcpy(dst->expression, expBuf);
+        printf("operators: %c %c\n", src->op, dst->op);
+
+        // char expBuf[100] = "=";
+        // strcat(expBuf, src->var.name);
+        // strcat(expBuf, "\n");
+        // strcpy(dst->expression, expBuf);
+        s->numSubExpressions += 1;
       }
     }
+  }
+  n = s->head;
+  while (n) {
+    if (n->op == '+' || n->op == '-') {
+      if (n->dupeCnt >= 2) {
+        stackNode *tmp = (stackNode *)malloc(sizeof(stackNode));
+        char *nameBuf = (char *)malloc(30 * sizeof(char));
+        sprintf(nameBuf, "tmp_cse_%d", tmp_count);
+        char *expBuf = (char *)malloc(500 * sizeof(char));
+        strcpy(expBuf, n->expression);
+      }
+    } else if (n->op == '*' || n->op == '/') {
+
+    } else if (n->op == 'e') {
+    }
+    n = n->next;
+  }
+  for (int i = 0; i < s->counter; i++) {
+    stackNode *tmp = (stackNode *)malloc(sizeof(stackNode));
+    char nameBuf[10];
+    sprintf(nameBuf, "tmpCSE%d", tmp_count);
+    tmp_count++;
+    strcpy(tmp->var.name, nameBuf);
+  }
+}
+
+void stackDuplicates(stack *s) {
+  stackNode *tmp1 = s->head;
+  stackNode *tmp2 = s->head;
+  while (tmp1) {
+    tmp1->dupeCnt = 0;
+    tmp2 = s->head;
+    tmp1->dupeExps = (stackNode **)malloc(30 * sizeof(stackNode *));
+    while (tmp2) {
+      if (tmp1->lineNum == tmp2->lineNum || tmp1->lineNum > tmp2->lineNum) {
+
+      } else {
+        if (!strcmp(tmp1->expression, tmp2->expression)) {
+          tmp1->dupeExps[tmp1->dupeCnt] =
+              (stackNode *)malloc(sizeof(stackNode));
+          tmp1->dupeExps[tmp1->dupeCnt] = tmp2;
+          tmp1->dupeCnt += 1;
+          printf("duplicate found: %s %s\n", tmp1->expression,
+                 tmp2->expression);
+        }
+      }
+      tmp2 = tmp2->next;
+    }
+    tmp1 = tmp1->next;
+  }
+}
+
+void printStackDuplicates(stack *s) {
+  stackNode *n = s->head;
+  while (n) {
+    printf("%d:%d duplicates\n", n->lineNum, n->dupeCnt);
+    for (int i = 0; i < n->dupeCnt; i++) {
+      printf("%d:%s\n", n->dupeExps[i]->lineNum, n->dupeExps[i]->expression);
+    }
+    switch (n->op) {
+    case '+':
+      s->addSubDupes += 1;
+      break;
+    case '-':
+      s->addSubDupes += 1;
+      break;
+    case '*':
+      s->multDivDupes += 1;
+      break;
+    case '/':
+      s->multDivDupes += 1;
+      break;
+    case 'e':
+      s->expDupes += 1;
+      break;
+    default:
+      break;
+    }
+    printf("----------------\n");
+    n = n->next;
+  }
+  printf("Add/Sub dupes: %d\n", s->addSubDupes);
+  printf("Mult/Div dupes: %d\n", s->multDivDupes);
+  printf("Exp dupes: %d\n", s->expDupes);
+}
+
+void recursiveSubExp(stack *s) {
+  int prevLatency = 0;
+  int currLatency = stackLatency(s);
+  while (prevLatency != currLatency) {
+    prevLatency = currLatency;
+    elimSubExp(s);
+    currLatency = stackLatency(s);
+    // printStack(s);
   }
 }
 
 int stackLatency(stack *s) {
   stackNode *n = s->head;
-  int maxlatency = 10;
+  int maxlatency = 0;
   int currentLatency = 0;
   while (n) {
 
-    currentLatency = nodeLatency(n);
-    if (currentLatency > maxlatency) {
-      maxlatency = currentLatency;
-    }
+    // currentLatency = nodeLatency(n);
+    // if (currentLatency > maxlatency) {
+    //   maxlatency = currentLatency;
+    // }
+    maxlatency += nodeLatency(n);
     n = n->next;
   }
   // latency
@@ -588,13 +718,13 @@ int nodeLatency(stackNode *n) {
       latency += 0;
     }
   }
-  if (n->dependency1) {
-    latency += nodeLatency(n->dependency1);
-  }
-  if (n->dependency2) {
-    latency += nodeLatency(n->dependency2);
-  }
-  printf("node %d latency: %d\n", n->lineNum, latency);
+  // if (n->dependency1) {
+  //   latency += nodeLatency(n->dependency1);
+  // }
+  // if (n->dependency2) {
+  //   latency += nodeLatency(n->dependency2);
+  // }
+  // printf("node %d latency: %d\n", n->lineNum, latency);
   n->latency = latency;
   return latency;
 }
