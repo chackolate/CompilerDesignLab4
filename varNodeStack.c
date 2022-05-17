@@ -49,6 +49,7 @@ struct stackNode *push(char *name, int val, stack *s) {
   stackNode *node = createVar(name, val);
   strcpy(node->outputs, name);
   node->lineNum = s->counter;
+  node->modified = false;
 
   if (s->counter != 0) {
     s->tail->next = node;
@@ -351,7 +352,7 @@ void finalMain(stack *s) {
   stackOperations(s);
   printf("-----------------------\n");
   // printStack(s);
-  printf("latency: %d\n", stackLatency(s));
+  // printf("latency: %d\n", stackLatency(s));
   // recursiveSubExp(s);
   // printf("latency: %d\n", stackLatency(s));
   // elimSubExp(s);
@@ -359,6 +360,8 @@ void finalMain(stack *s) {
   printStack(s);
   // printf("new latency: %d\n", stackLatency(s));
   printStackDuplicates(s);
+  recursiveSubExp(s);
+  // printStack(s);
   // stackOperations(s);
   // heuristicAnalysis(s);
 }
@@ -524,79 +527,6 @@ void printStackAttributes(stack *s) {
   }
 }
 
-void elimSubExp(stack *s) {
-  int tmp_count = 0;
-  stackNode *n = s->head;
-  char **subexpressions = (char **)malloc(30 * sizeof(char *)); // 30 strings
-  int expCount = 0;
-  int addSubCnt = 0;
-  int multDivCnt = 0;
-  int expCnt = 0;
-  while (n) {
-
-    subexpressions[expCount] =
-        (char *)malloc(500 * sizeof(char)); // 30 chars to a string
-    strcpy(subexpressions[expCount], n->expression);
-    expCount++;
-    n = n->next;
-  }
-  // printf("%d expressions\n", expCount);
-  for (int i = 0; i < expCount; i++) {
-    // currently focused line
-    for (int j = i; j < expCount; j++) {
-      // loop through whole program count
-      if (i == j) {
-
-      } else if (!strcmp(subexpressions[i], subexpressions[j])) {
-        printf("duplicate found line %d %s %s\n", j, subexpressions[i],
-               subexpressions[j]);
-        stackNode *src = s->head;
-        for (int l = 0; l < i; l++) {
-          src = src->next;
-        }
-        src->dupeCnt += 1;
-        char expBuf[100] = "=";
-        strcat(expBuf, src->var.name);
-
-        stackNode *dst = s->head;
-        for (int k = 0; k < j; k++) {
-          dst = dst->next;
-        }
-        printf("operators: %c %c\n", src->op, dst->op);
-
-        // char expBuf[100] = "=";
-        // strcat(expBuf, src->var.name);
-        // strcat(expBuf, "\n");
-        // strcpy(dst->expression, expBuf);
-        s->numSubExpressions += 1;
-      }
-    }
-  }
-  n = s->head;
-  while (n) {
-    if (n->op == '+' || n->op == '-') {
-      if (n->dupeCnt >= 2) {
-        stackNode *tmp = (stackNode *)malloc(sizeof(stackNode));
-        char *nameBuf = (char *)malloc(30 * sizeof(char));
-        sprintf(nameBuf, "tmp_cse_%d", tmp_count);
-        char *expBuf = (char *)malloc(500 * sizeof(char));
-        strcpy(expBuf, n->expression);
-      }
-    } else if (n->op == '*' || n->op == '/') {
-
-    } else if (n->op == 'e') {
-    }
-    n = n->next;
-  }
-  for (int i = 0; i < s->counter; i++) {
-    stackNode *tmp = (stackNode *)malloc(sizeof(stackNode));
-    char nameBuf[10];
-    sprintf(nameBuf, "tmpCSE%d", tmp_count);
-    tmp_count++;
-    strcpy(tmp->var.name, nameBuf);
-  }
-}
-
 void stackDuplicates(stack *s) {
   stackNode *tmp1 = s->head;
   stackNode *tmp2 = s->head;
@@ -657,15 +587,103 @@ void printStackDuplicates(stack *s) {
   printf("Exp dupes: %d\n", s->expDupes);
 }
 
-void recursiveSubExp(stack *s) {
-  int prevLatency = 0;
-  int currLatency = stackLatency(s);
-  while (prevLatency != currLatency) {
-    prevLatency = currLatency;
-    elimSubExp(s);
-    currLatency = stackLatency(s);
-    // printStack(s);
+stack *elimSubExp(stack *s, stack *newStack, stackNode *n, int *tmpCnt) {
+  // copy expressions
+  char *expBuf = (char *)malloc(500 * sizeof(char));
+  char *nameBuf = (char *)malloc(20 * sizeof(char));
+  strcpy(expBuf, n->expression);
+  sprintf(nameBuf, "tmp_cse_%d", *tmpCnt);
+  stackNode *newGuy = (stackNode *)malloc(sizeof(stackNode));
+  strcpy(newGuy->expression, expBuf);
+  stackNode *ptr = s->head;
+  printf("%d:%s\n", n->lineNum, expBuf);
+  char *expBuf2 = (char *)malloc(500 * sizeof(char));
+  sprintf(expBuf2, "=tmp_cse_%d\n", *tmpCnt);
+
+  // stack *newStack = (stack *)malloc(sizeof(stack));
+  // link new line if necessary
+  if (n->dupeCnt > 0) {
+    newGuy = push(nameBuf, 0, newStack);
+    strcpy(newGuy->expression, expBuf);
+    newGuy->lineNum = newStack->counter;
+    n = push(n->var.name, n->var.val, newStack);
+    n->lineNum = newStack->counter;
+  } else {
+    n = push(n->var.name, n->var.val, newStack);
+    n->lineNum = newStack->counter;
   }
+
+  // while (ptr) {
+  //   if (ptr->lineNum == n->lineNum || ptr->lineNum < n->lineNum ||
+  //       ptr->modified != false) {
+  //   } else {
+  //     if (!strcmp(ptr->expression, expBuf)) {
+  //       printf("%d:%s %d:%s", ptr->lineNum, ptr->expression, n->lineNum,
+  //              n->expression);
+  //       strcpy(ptr->expression, expBuf2);
+  //       printf("%d:%s %d:%s", ptr->lineNum, ptr->expression, n->lineNum,
+  //              n->expression);
+  //       ptr->modified = true;
+  //       if (ptr->lineNum == 0) {
+  //         s->head = newGuy;
+  //         newGuy->next = ptr;
+  //       } else {
+  //         stackNode *tmpPtr = s->head;
+  //         for (int i = 0; i < ptr->lineNum - 1; i++) {
+  //           tmpPtr = tmpPtr->next;
+  //         }
+  //         tmpPtr->next = newGuy;
+  //         newGuy->next = ptr;
+  //       }
+  //     }
+  //   }
+  //   ptr = ptr->next;
+  // }
+  // *tmpCnt += 1;
+  printf("-----------------\n");
+  // char *expBuf = (char *)malloc(500 * sizeof(char));
+  // strcpy(expBuf, n->expression);
+  // stackNode *tmp = s->head;
+  // int tmpCnt = 0;
+  // while (tmp) {
+  //   if (tmp->lineNum == n->lineNum || tmp->lineNum > n->lineNum ||
+  //       tmp->dupeCnt == 0) {
+
+  //   } else {
+  //     char nameBuf[30];
+  //     stackNode *newGuy = (stackNode *)malloc(sizeof(stackNode));
+  //     sprintf(nameBuf, "tmp_cse_%d\n", tmpCnt);
+  //     strcpy(newGuy->var.name, nameBuf);
+  //     strcpy(newGuy->expression, expBuf);
+  //     printf("%s%s\n", newGuy->var.name, newGuy->expression);
+  //     newGuy->next = n;
+  //     s->counter += 1;
+  //     if (tmp->lineNum == 0) {
+  //       s->head = newGuy;
+  //     }
+  //     sprintf(nameBuf, "=tmp_cse_%d\n", tmpCnt);
+  //     strcpy(n->expression, nameBuf);
+  //     for (int i = 0; i < n->dupeCnt; i++) {
+  //       stackNode *target = n->dupeExps[i];
+  //       strcpy(target->expression, nameBuf);
+  //     }
+  //     tmpCnt++;
+  //   }
+  //   tmp = tmp->next;
+  // }
+  return newStack;
+}
+
+void recursiveSubExp(stack *s) {
+  int *tmpCnt = (int *)malloc(sizeof(int));
+  *tmpCnt = 0;
+  stackNode *n = s->head;
+  stack *newStack = (stack *)malloc(sizeof(stack));
+  while (n) {
+    newStack = elimSubExp(s, newStack, n, tmpCnt);
+    n = n->next;
+  }
+  printStack(newStack);
 }
 
 int stackLatency(stack *s) {

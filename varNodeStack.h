@@ -17,6 +17,7 @@ typedef struct stackNode {
   struct stackNode *dependency2;
   char op;
   int dupeCnt;
+  bool modified;
   struct stackNode **dupeExps;
   char expression[500];
   int latency;
@@ -84,7 +85,6 @@ program *Lab3Main(stack *s);
 
 // Final Project
 void finalMain(stack *s);
-void elimSubExp(stack *s);
 int nodeLatency(stackNode *n);
 int stackLatency(stack *s);
 void printNodeAttributes(stackNode *n);
@@ -96,6 +96,7 @@ void stackOperations(stack *s);
 void checkDependent(stackNode *a, stackNode *b);
 void stackDependencies(stack *s);
 void heuristicAnalysis(stack *s);
+stack *elimSubExp(stack *s, stack *newStack, stackNode *n, int *tmpCnt);
 void recursiveSubExp(stack *s);
 void printStackDuplicates(stack *s);
 void stackDuplicates(stack *s);
